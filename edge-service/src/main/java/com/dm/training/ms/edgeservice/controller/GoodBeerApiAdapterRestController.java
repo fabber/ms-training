@@ -1,5 +1,6 @@
 package com.dm.training.ms.edgeservice.controller;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dm.training.ms.edgeservice.beerclient.BeerClient;
 import com.dm.training.ms.edgeservice.dto.Beer;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 @RestController
 class GoodBeerApiAdapterRestController {
@@ -17,6 +19,7 @@ class GoodBeerApiAdapterRestController {
         this.beerClient = beerClient;
     }
 
+    @HystrixCommand(fallbackMethod = "fallback")
     @GetMapping("/good-beers")
     public Collection<Beer> goodBeers() {
         return beerClient.readBeers()
@@ -24,6 +27,10 @@ class GoodBeerApiAdapterRestController {
                 .stream()
                 .filter(this::isGreat)
                 .collect(Collectors.toList());
+    }
+
+    public Collection<Beer> fallback() {
+        return new ArrayList<>();
     }
 
     private boolean isGreat(Beer beer) {
